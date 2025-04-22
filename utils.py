@@ -17,3 +17,14 @@ def get_move_input(board_size):
             return row, col
         else:
             print(f"Coordinates must be between 0 and {board_size - 1}")
+
+
+
+
+# # File: utils.py
+# def parse_input(move_input):
+#     try:
+#         row, col = map(int, move_input.strip().split())
+#         return row, col
+#     except ValueError:
+#         raise ValueError("Please enter two integers separated by space.")

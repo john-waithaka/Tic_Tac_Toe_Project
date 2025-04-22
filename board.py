@@ -1,51 +1,36 @@
-from enums import Player
-from exceptions import InvalidMoveError, CellOccupiedError
-
-class Cell:
-    def __init__(self):
-        self.owner = None
-
-    def mark(self, player):
-        if self.owner is not None:
-            raise CellOccupiedError("Cell is already occupied.")
-        self.owner = player
-
-    def __str__(self):
-        return self.owner.value if self.owner else " "
+# File: board.py
+from enums import PlayerSymbol
+from exceptions import InvalidMoveException, PositionOccupiedException
 
 class Board:
     def __init__(self, size=3):
-        if size < 3 or size > 8:
-            raise InvalidMoveError("Board size must be between 3 and 8.")
         self.size = size
-        self.grid = [[Cell() for _ in range(size)] for _ in range(size)]
+        self.grid = [[PlayerSymbol.EMPTY for _ in range(size)] for _ in range(size)]
 
-    def mark_cell(self, row, col, player):
-        self.grid[row][col].mark(player)
-
-    def check_winner(self, player):
-        # Check rows
+    def display(self):
         for row in self.grid:
-            if all(cell.owner == player for cell in row):
+            print(" | ".join(cell.value for cell in row))
+            print("-" * (self.size * 4 - 1))
+
+    def is_full(self):
+        return all(cell != PlayerSymbol.EMPTY for row in self.grid for cell in row)
+
+    def place_move(self, row, col, symbol):
+        if not (0 <= row < self.size and 0 <= col < self.size):
+            raise InvalidMoveException("Move out of bounds.")
+        if self.grid[row][col] != PlayerSymbol.EMPTY:
+            raise PositionOccupiedException("Position already taken.")
+        self.grid[row][col] = symbol
+
+    def check_winner(self, symbol):
+        # Check rows and columns
+        for i in range(self.size):
+            if all(self.grid[i][j] == symbol for j in range(self.size)) or \
+               all(self.grid[j][i] == symbol for j in range(self.size)):
                 return True
-        # Check columns
-        for col in range(self.size):
-            if all(self.grid[row][col].owner == player for row in range(self.size)):
-                return True
-        # Diagonal top-left to bottom-right
-        if all(self.grid[i][i].owner == player for i in range(self.size)):
-            return True
-        # Diagonal top-right to bottom-left
-        if all(self.grid[i][self.size - 1 - i].owner == player for i in range(self.size)):
+        # Check diagonals
+        if all(self.grid[i][i] == symbol for i in range(self.size)) or \
+           all(self.grid[i][self.size - i - 1] == symbol for i in range(self.size)):
             return True
         return False
 
-    def is_full(self):
-        return all(cell.owner is not None for row in self.grid for cell in row)
-
-    def display(self):
-        print("\nCurrent Board:")
-        for i, row in enumerate(self.grid):
-            print(" | ".join(str(cell) for cell in row))
-            if i < self.size - 1:
-                print("-" * (self.size * 4 - 3))

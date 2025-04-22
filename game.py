@@ -1,28 +1,52 @@
-from enums import Player
+# File: game.py
 from board import Board
-from exceptions import InvalidMoveError, CellOccupiedError
+from enums import PlayerSymbol
+from exceptions import InvalidMoveException, PositionOccupiedException
+import random
 
 class Game:
-    def __init__(self, board_size=3):
-        self.board = Board(board_size)
-        self.current_player = Player.X
-        self.winner = None
+    def __init__(self, size=3):
+        self.board = Board(size)
 
-    def play_turn(self, row, col):
-        try:
-            self.board.mark_cell(row, col, self.current_player)
-        except (InvalidMoveError, CellOccupiedError) as e:
-            raise e
+    def get_human_move(self):
+        while True:
+            move_input = input("Enter your move (row col): ")
+            try:
+                row, col = map(int, move_input.strip().split())
+                return row, col
+            except ValueError:
+                print("Invalid input. Please enter two integers.")
 
-        if self.board.check_winner(self.current_player):
-            self.winner = self.current_player
-        elif self.board.is_full():
-            self.winner = "Draw"
-        else:
-            self.current_player = self.current_player.other()
+    def get_computer_move(self):
+        size = self.board.size
+        while True:
+            row, col = random.randint(0, size - 1), random.randint(0, size - 1)
+            if self.board.grid[row][col] == PlayerSymbol.EMPTY:
+                return row, col
 
-    def is_game_over(self):
-        return self.winner is not None
+    def play(self):
+        current_symbol = PlayerSymbol.HUMAN
+        while True:
+            self.board.display()
+            if current_symbol == PlayerSymbol.HUMAN:
+                row, col = self.get_human_move()
+            else:
+                row, col = self.get_computer_move()
 
-    def get_winner(self):
-        return self.winner
+            try:
+                self.board.place_move(row, col, current_symbol)
+            except (InvalidMoveException, PositionOccupiedException) as e:
+                print(e)
+                continue
+
+            if self.board.check_winner(current_symbol):
+                self.board.display()
+                print(f"{current_symbol.value} wins!")
+                return current_symbol
+
+            if self.board.is_full():
+                self.board.display()
+                print("It's a draw!")
+                return None
+
+            current_symbol = PlayerSymbol.COMPUTER if current_symbol == PlayerSymbol.HUMAN else PlayerSymbol.HUMAN
